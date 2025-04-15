@@ -9,7 +9,3 @@ A lightweight toolkit for website resource.
 - Cross-origin tracking
 - Data visualization
 - Exportable reports
-
-## Installation
-```bash
-git clone https://github.com/your-username/Terralytic
