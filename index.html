@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Calculate your website's carbon footprint instantly - 100% client-side analysis">
-    <title>Green Website Carbon Calculator</title>
+    <meta name="description" content="Website performance analysis tool">
+    <title>Terralytic - Web Metrics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -21,6 +21,15 @@
             background: var(--dark-bg);
             color: var(--text-light);
             line-height: 1.6;
+        }
+
+        /* FIXED INPUT STYLES */
+        #websiteUrl {
+            width: 100%;
+            -webkit-user-select: all !important;
+            -moz-user-select: all !important;
+            -ms-user-select: all !important;
+            user-select: all !important;
         }
 
         .header {
@@ -97,24 +106,25 @@
 </head>
 <body>
     <div class="header">
-        <h1>🌱 Green Website Carbon Calculator</h1>
-        <p>Measure your website's environmental impact in real-time</p>
+        <h1>Terralytic Web Metrics</h1>
+        <p>Advanced website performance analysis</p>
     </div>
 
     <div class="input-group">
         <input type="url" id="websiteUrl" 
-               placeholder="Enter website URL (e.g., https://example.com)" 
-               autocomplete="off">
+               placeholder="Enter website URL (e.g., https://example.com)"
+               autocomplete="off"
+               autocorrect="off"
+               spellcheck="false">
         <select id="hostingType">
-            <option value="green">🌿 Green Hosting</option>
-            <option value="standard">⚡ Standard Hosting</option>
+            <option value="green">Advanced Hosting</option>
+            <option value="standard">Standard Hosting</option>
         </select>
-        <button onclick="initAnalysis()">Calculate Carbon Footprint</button>
+        <button onclick="initAnalysis()">Analyze Website</button>
     </div>
 
     <div class="ads">
         <!-- AdSense Placeholder -->
-        <!-- Replace with your AdSense code -->
         <ins class="adsbygoogle"
              style="display:block"
              data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
@@ -128,26 +138,33 @@
     <div class="result-section" id="resultSection">
         <h2>Analysis Results</h2>
         <div class="eco-badge">
-            <h3>🌍 Your website emits <span id="co2Amount">0.00g</span> CO₂ per visit</h3>
-            <p>Equivalent to driving <span id="equivalence">0.000 miles</span> in a gas car</p>
+            <h3>📊 Resource Impact: <span id="co2Amount">0.00u</span></h3>
+            <p>Comparative metric: <span id="equivalence">0.000 units</span></p>
         </div>
 
         <canvas id="carbonChart"></canvas>
 
         <div class="input-group">
-            <button onclick="generateBadge()">🖼️ Download Eco Badge</button>
-            <button onclick="shareResults()">📤 Share Results</button>
+            <button onclick="generateBadge()">📥 Download Report</button>
+            <button onclick="shareResults()">📤 Share Analysis</button>
         </div>
     </div>
 
     <script>
-        // Anti-copy protection
+        // Security: Basic protection without blocking input
         document.addEventListener('contextmenu', e => e.preventDefault());
-        document.onkeydown = e => (e.ctrlKey && e.shiftKey && e.key === 'I') && e.preventDefault();
+        document.onkeydown = e => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') e.preventDefault();
+        };
 
         // Core functionality
-        const HostingFactors = {green:0.3,standard:0.7};
+        const HostingFactors = {green:0.3, standard:0.7};
         let currentChart = null;
+
+        // INITIALIZE INPUT FIELD
+        document.getElementById('websiteUrl').addEventListener('focus', function() {
+            this.select();
+        });
 
         async function initAnalysis() {
             try {
@@ -195,7 +212,7 @@
                     }
                 };
 
-                iframe.onerror = () => reject(new Error('Failed to analyze website'));
+                iframe.onerror = () => reject(new Error('Analysis failed'));
                 iframe.src = url;
                 document.body.appendChild(iframe);
             });
@@ -203,27 +220,30 @@
 
         function displayResults({co2, mb}) {
             document.getElementById('resultSection').style.display = 'block';
-            document.getElementById('co2Amount').textContent = `${co2}g`;
-            document.getElementById('equivalence').textContent = `${(co2 / 404).toFixed(3)} miles`;
+            document.getElementById('co2Amount').textContent = `${co2}u`;
+            document.getElementById('equivalence').textContent = `${(co2 / 404).toFixed(3)} units`;
             
             if(currentChart) currentChart.destroy();
             const ctx = document.getElementById('carbonChart').getContext('2d');
             currentChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Your Website', 'Industry Average'],
+                    labels: ['Target Site', 'Industry Average'],
                     datasets: [{
-                        label: 'CO₂ Emissions (grams per visit)',
+                        label: 'Resource Impact Units',
                         data: [co2, 1.8],
-                        backgroundColor: [getComputedStyle(document.documentElement)
-                            .getPropertyValue('--eco-green'), '#666']
+                        backgroundColor: [
+                            getComputedStyle(document.documentElement)
+                                .getPropertyValue('--eco-green'), 
+                            '#666'
+                        ]
                     }]
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         legend: {position: 'top'},
-                        title: {display: true, text: 'Carbon Footprint Comparison'}
+                        title: {display: true, text: 'Performance Benchmark'}
                     }
                 }
             });
@@ -235,7 +255,7 @@
                 <rect width="100%" height="100%" rx="8" fill="#2ecc7120"/>
                 <text x="50%" y="50%" font-family="Arial" font-size="20" 
                       fill="#2ecc71" text-anchor="middle" dominant-baseline="middle">
-                    ${co2} CO₂/visit
+                    ${co2} Resource Impact
                 </text>
             </svg>`;
             
@@ -243,16 +263,16 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'eco-badge.svg';
+            a.download = 'terralytic-report.svg';
             a.click();
         }
 
         function shareResults() {
             const co2 = document.getElementById('co2Amount').textContent;
-            const text = `My website emits ${co2} of CO₂ per visit - check yours! ${location.href}`;
+            const text = `Website resource impact: ${co2} - Analyze yours at ${location.href}`;
             
             if(navigator.share) {
-                navigator.share({title: 'Carbon Analysis', text});
+                navigator.share({title: 'Terralytic Analysis', text});
             } else {
                 prompt('Copy to share:', text);
             }
