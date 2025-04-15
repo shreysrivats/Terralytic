@@ -111,6 +111,8 @@
     </div>
 
     <script>
+        let currentChart = null; // Chart instance tracker
+
         const HostingFactors = {
             green: 0.3,   // Green hosting energy factor
             standard: 0.7 // Standard hosting factor
@@ -134,16 +136,12 @@
         }
 
         async function calculateImpact(url, hostingType) {
-            // Simulated dynamic calculation based on URL characteristics
-            const pageWeight = Math.min(url.length * 1500, 5000); // Simulated weight between 1KB-5MB
+            const pageWeight = Math.min(url.length * 1500, 5000);
             const energyFactor = HostingFactors[hostingType] || 0.7;
             
-            // Realistic emission formula (grams CO2 per visit)
             const co2PerVisit = ((pageWeight / 1024) * 0.5 + energyFactor).toFixed(2);
-            
-            // Real-world comparisons
-            const milesDriven = (co2PerVisit / 404).toFixed(2); // Avg car emits 404g CO2/mile
-            const bulbHours = (co2PerVisit / 0.05).toFixed(1); // LED bulb uses ~0.05g CO2/hour
+            const milesDriven = (co2PerVisit / 404).toFixed(2);
+            const bulbHours = (co2PerVisit / 0.05).toFixed(1);
             
             return {
                 co2: co2PerVisit,
@@ -155,19 +153,23 @@
         function displayResults({co2, miles, bulb}) {
             document.getElementById('resultSection').style.display = 'block';
             
-            // Update metrics
             document.getElementById('co2Amount').textContent = co2;
             document.getElementById('carMiles').textContent = miles;
             document.getElementById('bulbHours').textContent = bulb;
 
-            // Update chart
             updateChart(co2);
         }
 
         function updateChart(co2Value) {
             const ctx = document.getElementById('carbonChart').getContext('2d');
             
-            new Chart(ctx, {
+            // Destroy existing chart first
+            if(currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+
+            currentChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Your Website', 'Average Website', 'Eco-Friendly Standard'],
