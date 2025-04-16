@@ -111,11 +111,11 @@
     </div>
 
     <script>
-        let currentChart = null; // Chart instance tracker
+        let currentChart = null;
 
         const HostingFactors = {
-            green: 0.3,   // Green hosting energy factor
-            standard: 0.7 // Standard hosting factor
+            green: 0.3,
+            standard: 0.7
         };
 
         async function initAnalysis() {
@@ -136,34 +136,52 @@
         }
 
         async function calculateImpact(url, hostingType) {
-            const pageWeight = Math.min(url.length * 1500, 5000);
-            const energyFactor = HostingFactors[hostingType] || 0.7;
-            
-            const co2PerVisit = ((pageWeight / 1024) * 0.5 + energyFactor).toFixed(2);
-            const milesDriven = (co2PerVisit / 404).toFixed(2);
-            const bulbHours = (co2PerVisit / 0.05).toFixed(1);
-            
-            return {
-                co2: co2PerVisit,
-                miles: milesDriven,
-                bulb: bulbHours
-            };
+            try {
+                const parsedUrl = new URL(url);
+                const hostHash = Array.from(parsedUrl.hostname).reduce((acc, char) => 
+                    acc + char.charCodeAt(0), 0);
+                
+                const baseWeight = {
+                    'facebook': 2500,
+                    'linkedin': 1800,
+                    'google': 1500
+                }[parsedUrl.hostname.split('.')[0]] || 2000;
+
+                const dynamicFactor = (hostHash % 1000) / 500;
+                const pageWeight = baseWeight * dynamicFactor;
+                const energyFactor = HostingFactors[hostingType] || 0.7;
+                
+                // Convert to milligrams for chart (x1000)
+                const co2PerVisit = ((pageWeight / 1024) * 0.5 + energyFactor).toFixed(2);
+                const chartCO2 = (co2PerVisit * 1000).toFixed(0); // Convert to mg
+
+                const milesDriven = (co2PerVisit / 404).toFixed(2);
+                const bulbHours = (co2PerVisit / 0.05).toFixed(1);
+
+                return {
+                    co2: co2PerVisit,
+                    chartCO2: chartCO2,
+                    miles: milesDriven,
+                    bulb: bulbHours
+                };
+            } catch (error) {
+                throw new Error('Invalid website analysis');
+            }
         }
 
-        function displayResults({co2, miles, bulb}) {
+        function displayResults({co2, chartCO2, miles, bulb}) {
             document.getElementById('resultSection').style.display = 'block';
             
-            document.getElementById('co2Amount').textContent = co2;
-            document.getElementById('carMiles').textContent = miles;
-            document.getElementById('bulbHours').textContent = bulb;
+            document.getElementById('co2Amount').textContent = `${co2}g`;
+            document.getElementById('carMiles').textContent = `${miles} miles`;
+            document.getElementById('bulbHours').textContent = `${bulb} hours`;
 
-            updateChart(co2);
+            updateChart(chartCO2);
         }
 
-        function updateChart(co2Value) {
+        function updateChart(chartCO2) {
             const ctx = document.getElementById('carbonChart').getContext('2d');
             
-            // Destroy existing chart first
             if(currentChart) {
                 currentChart.destroy();
                 currentChart = null;
@@ -174,13 +192,21 @@
                 data: {
                     labels: ['Your Website', 'Average Website', 'Eco-Friendly Standard'],
                     datasets: [{
-                        label: 'CO₂ Emissions (grams per visit)',
-                        data: [co2Value, 1.8, 0.9],
+                        label: 'CO₂ Emissions (milligrams per visit)',
+                        data: [chartCO2, 1800, 900], // Converted to mg
                         backgroundColor: ['#2ecc71', '#666', '#4a90e2']
                     }]
                 },
                 options: {
                     responsive: true,
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Milligrams of CO₂'
+                            }
+                        }
+                    },
                     plugins: {
                         legend: { position: 'top' },
                         title: {
@@ -195,10 +221,10 @@
         function generateReport() {
             const reportContent = `Terralytic Environmental Report\n
 Website: ${document.getElementById('websiteUrl').value}
-CO2 per Visit: ${document.getElementById('co2Amount').textContent}g
+CO2 per Visit: ${document.getElementById('co2Amount').textContent}
 Equivalent to: 
-- Driving ${document.getElementById('carMiles').textContent} miles
-- Powering a LED bulb for ${document.getElementById('bulbHours').textContent} hours`;
+- Driving ${document.getElementById('carMiles').textContent}
+- Powering a LED bulb for ${document.getElementById('bulbHours').textContent}`;
 
             const blob = new Blob([reportContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -210,7 +236,7 @@ Equivalent to:
 
         function shareResults() {
             const message = `My website's environmental impact: 
-${document.getElementById('co2Amount').textContent}g CO₂/visit
+${document.getElementById('co2Amount').textContent} CO₂/visit
 Check yours: ${window.location.href}`;
 
             if (navigator.share) {
