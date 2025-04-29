@@ -23,6 +23,9 @@
             background: var(--dark-bg);
             color: var(--text-light);
             line-height: 1.6;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
         }
 
         .header {
@@ -72,12 +75,12 @@
             display: flex;
             gap: 1rem;
             margin-top: 1.5rem;
-            /*flex-wrap: wrap;*/
         }
+
         .button-group button {
-    flex: 1; /* Makes buttons take equal width */
-    min-width: 0; /* Allows buttons to shrink if needed */
-}
+            flex: 1;
+            min-width: 0;
+        }
 
         .result-section {
             background: #ffffff08;
@@ -176,11 +179,28 @@
             border-top: 1px solid #444;
         }
 
+        footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        footer a {
+            color: var(--eco-green);
+            text-decoration: none;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 1rem;
+                padding-bottom: 80px;
             }
-            
+        
             .header {
                 margin: 1rem 0;
                 padding: 1rem;
@@ -189,10 +209,6 @@
             .button-group {
                 flex-direction: column;
             }
-            
-            button {
-                width: 100%;
-            }
         }
     </style>
 </head>
@@ -200,7 +216,7 @@
     <div class="cookie-consent" id="cookieConsent">
         <div>
             🍪 We use cookies for essential functionality. 
-            <a href="/privacy.html" style="color: var(--eco-green);">Learn more</a>
+            <a href="privacy.html" style="color: var(--eco-green);">Learn more</a>
         </div>
         <div>
             <button onclick="acceptCookies()" style="margin-left: 1rem;">Accept</button>
@@ -260,6 +276,10 @@
 
         <div class="report-source" id="reportSource"></div>
     </div>
+
+    <footer>
+        <p>&copy; 2023 Terralytic. All rights reserved. | <a href="privacy.html">Privacy Policy</a></p>
+    </footer>
 
     <script>
         'use strict';
