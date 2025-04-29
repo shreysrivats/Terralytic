@@ -72,8 +72,12 @@
             display: flex;
             gap: 1rem;
             margin-top: 1.5rem;
-            flex-wrap: wrap;
+            /*flex-wrap: wrap;*/
         }
+        .button-group button {
+    flex: 1; /* Makes buttons take equal width */
+    min-width: 0; /* Allows buttons to shrink if needed */
+}
 
         .result-section {
             background: #ffffff08;
