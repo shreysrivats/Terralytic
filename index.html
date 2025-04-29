@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional website carbon footprint analysis tool">
     <title>Terralytic - Professional Carbon Analysis</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.polyfill.io/v3/polyfill.min.js"></script>
@@ -15,7 +16,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', system-ui;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 2rem;
@@ -51,18 +52,27 @@
             background: var(--eco-green);
             border: none;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         button:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
         .button-group {
             display: flex;
             gap: 1rem;
             margin-top: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .result-section {
@@ -80,9 +90,28 @@
             margin: 2rem 0;
         }
 
+        .comparison-item {
+            background: #ffffff10;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .comparison-item:before {
+            content: "•";
+            color: var(--eco-green);
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
         #carbonChart {
             margin: 2rem auto;
             max-width: 600px;
+            background: #ffffff08;
+            border-radius: 8px;
+            padding: 1rem;
         }
 
         .loading-overlay {
@@ -132,6 +161,34 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 1000;
+        }
+
+        .report-source {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #444;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .header {
+                margin: 1rem 0;
+                padding: 1rem;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -176,9 +233,18 @@
     <div class="result-section" id="resultSection">
         <div class="comparison-card">
             <h3>📈 Environmental Impact Analysis</h3>
-            <p>🛢️ <strong><span id="co2Amount">0.00g</span> CO₂</strong> per visit</p>
-            <p>🚗 Equivalent to driving <strong><span id="carMiles">0.0000 miles</span></strong></p>
-            <p>💡 Equal to powering <strong><span id="bulbHours">0.00 hours</span></strong> of a LED bulb</p>
+            <div class="comparison-item">
+                <strong><span id="co2Amount">0.00g</span> CO₂</strong> per visit
+            </div>
+            <div class="comparison-item">
+                Equivalent to charging <strong><span id="smartphones">0.00</span> smartphones</strong>
+            </div>
+            <div class="comparison-item">
+                Equal to <strong><span id="waterLiters">0.00 liters</span></strong> of boiled water
+            </div>
+            <div class="comparison-item">
+                Same as <strong><span id="fridgeHours">0.00 hours</span></strong> of refrigerator operation
+            </div>
         </div>
 
         <canvas id="carbonChart" aria-label="Environmental impact comparison chart"></canvas>
@@ -187,6 +253,8 @@
             <button onclick="generateReport()">📥 Download Full Report</button>
             <button onclick="shareResults()">📤 Share Analysis</button>
         </div>
+
+        <div class="report-source" id="reportSource"></div>
     </div>
 
     <script>
@@ -249,8 +317,10 @@
             return {
                 co2: totalCO2,
                 chartCO2: (totalCO2 * 1000).toFixed(0),
-                miles: (totalCO2 / 404).toFixed(4),
-                bulb: (totalCO2 / 0.05).toFixed(1)
+                smartphones: (totalCO2 / 0.0035).toFixed(1),
+                water: (totalCO2 / 0.024).toFixed(2),
+                fridge: (totalCO2 / 0.0009).toFixed(1),
+                url: parsedUrl.href
             };
         }
 
@@ -284,14 +354,24 @@
             localStorage.setItem('rateLimit', JSON.stringify(state));
         }
 
-        function displayResults({ co2, chartCO2, miles, bulb }) {
-            document.getElementById('resultSection').style.display = 'block';
+        function displayResults({ co2, chartCO2, smartphones, water, fridge, url }) {
+            const resultSection = document.getElementById('resultSection');
+            resultSection.style.display = 'block';
             
             document.getElementById('co2Amount').textContent = `${co2}g`;
-            document.getElementById('carMiles').textContent = `${miles} miles`;
-            document.getElementById('bulbHours').textContent = `${bulb} hours`;
+            document.getElementById('smartphones').textContent = `${smartphones}`;
+            document.getElementById('waterLiters').textContent = `${water}`;
+            document.getElementById('fridgeHours').textContent = `${fridge}`;
+            
+            document.getElementById('reportSource').innerHTML = `
+                Analysis for: <strong>${url}</strong><br>
+                Generated on: ${new Date().toLocaleString()}
+            `;
 
             updateChart(chartCO2);
+            
+            // Scroll to results
+            resultSection.scrollIntoView({ behavior: 'smooth' });
         }
 
         function updateChart(chartCO2) {
@@ -313,13 +393,167 @@
                     responsive: true,
                     plugins: {
                         legend: { position: 'top' },
-                        title: { text: 'Environmental Impact Comparison' }
+                        title: { 
+                            display: true,
+                            text: 'Environmental Impact Comparison',
+                            font: { size: 16 }
+                        }
                     },
                     scales: {
-                        y: { title: { display: true, text: 'Milligrams of CO₂' } }
+                        y: { 
+                            title: { 
+                                display: true, 
+                                text: 'Milligrams of CO₂',
+                                font: { weight: 'bold' }
+                            } 
+                        }
                     }
                 }
             });
+        }
+
+        async function generateReport() {
+            try {
+                showLoading(true);
+                
+                const url = document.getElementById('websiteUrl').value;
+                if (!url) throw new Error('No analysis data available');
+                
+                // Capture current results
+                const co2 = document.getElementById('co2Amount').textContent;
+                const smartphones = document.getElementById('smartphones').textContent;
+                const water = document.getElementById('waterLiters').textContent;
+                const fridge = document.getElementById('fridgeHours').textContent;
+                const source = document.getElementById('reportSource').innerHTML;
+                
+                // Create HTML report with all styles
+                const reportHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Terralytic Report</title>
+                        <meta charset="UTF-8">
+                        <style>
+                            body {
+                                font-family: 'Segoe UI', system-ui, sans-serif;
+                                max-width: 800px;
+                                margin: 0 auto;
+                                padding: 2rem;
+                                color: #333;
+                                line-height: 1.6;
+                            }
+                            .header {
+                                text-align: center;
+                                margin-bottom: 2rem;
+                                padding-bottom: 1rem;
+                                border-bottom: 2px solid #2ecc71;
+                            }
+                            .comparison-card {
+                                background: #f0f8f0;
+                                padding: 1.5rem;
+                                border-radius: 8px;
+                                margin: 2rem 0;
+                            }
+                            .comparison-item {
+                                background: #ffffff;
+                                padding: 0.75rem 1rem;
+                                margin: 0.5rem 0;
+                                border-radius: 8px;
+                                display: flex;
+                                align-items: center;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                            }
+                            .comparison-item:before {
+                                content: "•";
+                                color: #2ecc71;
+                                margin-right: 0.5rem;
+                                font-weight: bold;
+                            }
+                            .report-source {
+                                font-size: 0.8rem;
+                                color: #666;
+                                margin-top: 2rem;
+                                padding-top: 1rem;
+                                border-top: 1px solid #ddd;
+                            }
+                            @media print {
+                                body { padding: 0; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>🌍 Terralytic Environmental Impact Report</h1>
+                        </div>
+                        
+                        <div class="comparison-card">
+                            <h3>Environmental Impact Analysis</h3>
+                            <div class="comparison-item">
+                                <strong>${co2} CO₂</strong> per visit
+                            </div>
+                            <div class="comparison-item">
+                                Equivalent to charging <strong>${smartphones} smartphones</strong>
+                            </div>
+                            <div class="comparison-item">
+                                Equal to <strong>${water} liters</strong> of boiled water
+                            </div>
+                            <div class="comparison-item">
+                                Same as <strong>${fridge} hours</strong> of refrigerator operation
+                            </div>
+                        </div>
+                        
+                        <div class="report-source">
+                            ${source}
+                        </div>
+                        
+                        <p class="no-print" style="margin-top: 2rem;">
+                            <em>This report was generated by Terralytic - Website Carbon Analysis Tool</em>
+                        </p>
+                    </body>
+                    </html>
+                `;
+                
+                // Create download link
+                const blob = new Blob([reportHTML], { type: 'text/html' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Terralytic-Report-${new Date().toISOString().slice(0,10)}.html`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function shareResults() {
+            try {
+                const url = document.getElementById('websiteUrl').value;
+                if (!url) throw new Error('No analysis data available');
+                
+                const co2 = document.getElementById('co2Amount').textContent;
+                const shareData = {
+                    title: 'Terralytic Carbon Analysis',
+                    text: `This website produces ${co2} CO₂ per visit. See full analysis:`,
+                    url: window.location.href
+                };
+                
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                } else {
+                    // Fallback for browsers without Web Share API
+                    const shareUrl = `mailto:?subject=${encodeURIComponent(shareData.title)}&body=${encodeURIComponent(shareData.text + ' ' + shareData.url)}`;
+                    window.location.href = shareUrl;
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    showError('Sharing failed: ' + error.message);
+                }
+            }
         }
 
         // Helper functions
@@ -340,6 +574,9 @@
             const errorBox = document.getElementById('errorBox');
             document.getElementById('errorMessage').textContent = message;
             errorBox.style.display = 'block';
+            
+            // Scroll to error message
+            errorBox.scrollIntoView({ behavior: 'smooth' });
         }
 
         function savePreferences() {
@@ -352,15 +589,20 @@
         }
 
         // Initialization
-        if(!localStorage.getItem('cookies-accepted')) {
-            document.getElementById('cookieConsent').style.display = 'flex';
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            if(!localStorage.getItem('cookies-accepted')) {
+                document.getElementById('cookieConsent').style.display = 'flex';
+            }
 
-        document.getElementById('hostingType').value = 
-            localStorage.getItem('preferredHosting') || 'green';
+            document.getElementById('hostingType').value = 
+                localStorage.getItem('preferredHosting') || 'green';
 
-        document.getElementById('websiteUrl').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') initAnalysis();
+            document.getElementById('websiteUrl').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') initAnalysis();
+            });
+            
+            // Focus URL input on page load
+            document.getElementById('websiteUrl').focus();
         });
     </script>
 </body>
